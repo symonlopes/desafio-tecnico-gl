@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: subscription_postgres
+    environment:
+      POSTGRES_DB: subscription_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - subscription_network
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: subscription_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    networks:
+      - subscription_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: subscription_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - subscription_network
+
+networks:
+  subscription_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
