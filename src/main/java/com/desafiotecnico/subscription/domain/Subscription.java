@@ -29,8 +29,7 @@ public class Subscription {
 
     private UUID userId;
 
-    @Enumerated(EnumType.STRING)
-    private PlanType plan;
+    private String plan;
 
     private LocalDate startDate;
     private LocalDate expirationDate;

@@ -1,4 +1,4 @@
-package com.desafiotecnico.subscription.controller.dto;
+package com.desafiotecnico.subscription.error;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

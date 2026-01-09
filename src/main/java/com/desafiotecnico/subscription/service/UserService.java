@@ -1,7 +1,8 @@
 package com.desafiotecnico.subscription.service;
 
-import com.desafiotecnico.subscription.controller.dto.UserRequest;
+import com.desafiotecnico.subscription.dto.request.UserCreationRequest;
 import com.desafiotecnico.subscription.domain.User;
+import com.desafiotecnico.subscription.error.CodedException;
 import com.desafiotecnico.subscription.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,14 +17,14 @@ public class UserService {
     private final UserRepository userRepository;
 
     @Transactional
-    public User createUser(UserRequest request) {
+    public User createUser(UserCreationRequest request) {
         log.info("Creating user with email: {}", request.getEmail());
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("User with this email already exists");
+            throw new CodedException("EMAIL_ALREADY_EXIST", "Já existe esse email cadastrado no sistema.");
         }
 
-        User user = User.builder()
+        var user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .build();

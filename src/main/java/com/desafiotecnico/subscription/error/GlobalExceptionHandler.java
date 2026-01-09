@@ -1,6 +1,5 @@
-package com.desafiotecnico.subscription.config;
+package com.desafiotecnico.subscription.error;
 
-import com.desafiotecnico.subscription.controller.dto.ApiError;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,12 +11,12 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
+    @ExceptionHandler(CodedException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(CodedException ex) {
         ApiError error = ApiError.builder()
-                .code("INVALID_ARGUMENT")
-                .description("Invalid argument provided")
-                .details(ex.getMessage())
+                .code(ex.getCode())
+                .description(ex.getMessage())
+                .details(ex.getDetails())
                 .build();
         return ResponseEntity.badRequest().body(error);
     }

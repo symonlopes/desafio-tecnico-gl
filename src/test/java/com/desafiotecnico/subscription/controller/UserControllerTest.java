@@ -1,10 +1,13 @@
 package com.desafiotecnico.subscription.controller;
 
-import com.desafiotecnico.subscription.controller.dto.ApiError;
-import com.desafiotecnico.subscription.controller.dto.UserRequest;
+import com.desafiotecnico.subscription.error.ApiError;
+import com.desafiotecnico.subscription.dto.request.UserCreationRequest;
 import com.desafiotecnico.subscription.domain.User;
 import com.desafiotecnico.subscription.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,118 +24,122 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Slf4j
 public class UserControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @Autowired
-    private UserRepository userRepository;
+        @Autowired
+        private UserRepository userRepository;
 
-    @BeforeEach
-    void setUp() {
-        userRepository.deleteAll();
-    }
+        @BeforeEach
+        void setUp() {
+                userRepository.deleteAll();
+        }
 
-    @Test
-    void createUser_WithValidData_ReturnsCreated() throws Exception {
-        var request = UserRequest.builder()
-                .name("John Doe")
-                .email("john@example.com")
-                .build();
+        @Test
+        void createUser_WithValidData_ReturnsCreated() throws Exception {
+                var request = UserCreationRequest.builder()
+                                .name("John Doe")
+                                .email("john@example.com")
+                                .build();
 
-        var result = mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andReturn();
+                var result = mockMvc.perform(post("/users")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isCreated())
+                                .andReturn();
 
-        User createdUser = objectMapper.readValue(result.getResponse().getContentAsString(), User.class);
+                User createdUser = objectMapper.readValue(result.getResponse().getContentAsString(), User.class);
 
-        assertNotNull(createdUser.getId());
-        assertEquals(request.getName(), createdUser.getName());
-        assertEquals(request.getEmail(), createdUser.getEmail());
+                log.info("Created user: {}", createdUser);
+                assertNotNull(createdUser.getId());
+                assertEquals(request.getName(), createdUser.getName());
+                assertEquals(request.getEmail(), createdUser.getEmail());
 
-        assertEquals(1, userRepository.count());
-    }
+                assertEquals(1, userRepository.count());
+        }
 
-    @Test
-    void createUser_WithInvalidEmail_ReturnsBadRequest() throws Exception {
-        var request = UserRequest.builder()
-                .name("John Doe")
-                .email("invalid-email")
-                .build();
+        @Test
+        void createUser_WithInvalidEmail_ReturnsBadRequest() throws Exception {
+                var request = UserCreationRequest.builder()
+                                .name("John Doe")
+                                .email("invalid-email")
+                                .build();
 
-        MvcResult result = mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andReturn();
+                MvcResult result = mockMvc.perform(post("/users")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isBadRequest())
+                                .andReturn();
 
-        String content = result.getResponse().getContentAsString();
-        ApiError apiError = objectMapper.readValue(content, ApiError.class);
+                var content = result.getResponse().getContentAsString();
+                var apiError = objectMapper.readValue(content, ApiError.class);
 
-        assertEquals("VALIDATION_ERROR", apiError.getCode());
-        assertNotNull(apiError.getDetails());
+                log.info("ApiError: {}", apiError);
 
-        assertEquals(0, userRepository.count());
-    }
+                assertEquals("VALIDATION_ERROR", apiError.getCode());
+                assertNotNull(apiError.getDetails());
 
-    @Test
-    void createUser_WithEmptyName_ReturnsBadRequest() throws Exception {
-        var request = UserRequest.builder()
-                .name("")
-                .email("john@example.com")
-                .build();
+                assertEquals(0, userRepository.count());
+        }
 
-        MvcResult result = mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andReturn();
+        @Test
+        void createUser_WithEmptyName_ReturnsBadRequest() throws Exception {
+                var request = UserCreationRequest.builder()
+                                .name("")
+                                .email("john@example.com")
+                                .build();
 
-        String content = result.getResponse().getContentAsString();
-        ApiError apiError = objectMapper.readValue(content, ApiError.class);
+                MvcResult result = mockMvc.perform(post("/users")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isBadRequest())
+                                .andReturn();
 
-        assertEquals("VALIDATION_ERROR", apiError.getCode());
-        assertNotNull(apiError.getDetails());
+                var content = result.getResponse().getContentAsString();
+                var apiError = objectMapper.readValue(content, ApiError.class);
 
-        assertEquals(0, userRepository.count());
-    }
+                assertEquals("VALIDATION_ERROR", apiError.getCode());
+                assertNotNull(apiError.getDetails());
 
-    @Test
-    void createUser_WithDuplicateEmail_ReturnsBadRequest() throws Exception {
-        // Create first user
-        var request1 = UserRequest.builder()
-                .name("John Doe")
-                .email("john@example.com")
-                .build();
+                assertEquals(0, userRepository.count());
+        }
 
-        mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request1)))
-                .andExpect(status().isCreated());
+        @Test
+        void createUser_WithDuplicateEmail_ReturnsBadRequest() throws Exception {
+                // Create first user
+                var request1 = UserCreationRequest.builder()
+                                .name("John Doe")
+                                .email("john@example.com")
+                                .build();
 
-        // Try to create second user with same email
-        var request2 = UserRequest.builder()
-                .name("Jane Doe")
-                .email("john@example.com")
-                .build();
+                mockMvc.perform(post("/users")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request1)))
+                                .andExpect(status().isCreated());
 
-        MvcResult result = mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request2)))
-                .andExpect(status().isBadRequest())
-                .andReturn();
+                // Try to create second user with same email
+                var request2 = UserCreationRequest.builder()
+                                .name("Jane Doe")
+                                .email("john@example.com")
+                                .build();
 
-        var content = result.getResponse().getContentAsString();
-        var apiError = objectMapper.readValue(content, ApiError.class);
+                MvcResult result = mockMvc.perform(post("/users")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request2)))
+                                .andExpect(status().isBadRequest())
+                                .andReturn();
 
-        assertEquals("INVALID_ARGUMENT", apiError.getCode());
+                var content = result.getResponse().getContentAsString();
+                var apiError = objectMapper.readValue(content, ApiError.class);
 
-        assertEquals(1, userRepository.count());
-    }
+                assertEquals("EMAIL_ALREADY_EXIST", apiError.getCode());
+
+                assertEquals(1, userRepository.count());
+        }
 }

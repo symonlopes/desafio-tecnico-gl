@@ -1,9 +1,11 @@
 package com.desafiotecnico.subscription.service;
 
-import com.desafiotecnico.subscription.controller.SubscriptionRequest;
+import com.desafiotecnico.subscription.dto.request.SubscriptionRequest;
 import com.desafiotecnico.subscription.domain.Subscription;
 import com.desafiotecnico.subscription.domain.SubscriptionStatus;
+import com.desafiotecnico.subscription.error.CodedException;
 import com.desafiotecnico.subscription.repository.SubscriptionRepository;
+import com.desafiotecnico.subscription.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,14 +21,19 @@ import java.util.UUID;
 public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public Subscription createSubscription(SubscriptionRequest request) {
         log.info("Creating subscription for user {}", request.getUserId());
 
+        if (!userRepository.existsById(request.getUserId())) {
+            throw new CodedException("USER_NOT_FOUND", "Usuário não encontrado.");
+        }
+
         // Simple validation: check if user already has an active subscription
         if (subscriptionRepository.findByUserIdAndStatus(request.getUserId(), SubscriptionStatus.ATIVA).isPresent()) {
-            throw new IllegalStateException("User already has an active subscription");
+            throw new CodedException("ACTIVE_SUBSCRIPTION_EXISTS", "Usuário já possui uma assinatura ativa.");
         }
 
         Subscription subscription = Subscription.builder()

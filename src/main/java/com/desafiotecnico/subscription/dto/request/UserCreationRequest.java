@@ -1,4 +1,4 @@
-package com.desafiotecnico.subscription.controller.dto;
+package com.desafiotecnico.subscription.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserRequest {
+public class UserCreationRequest {
 
     @NotBlank(message = "Name is required")
     private String name;
