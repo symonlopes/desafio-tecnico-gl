@@ -3,13 +3,14 @@ package com.desafiotecnico.subscription.controller;
 import com.desafiotecnico.subscription.domain.Plan;
 import com.desafiotecnico.subscription.domain.User;
 import com.desafiotecnico.subscription.dto.request.SubscriptionRequest;
+import com.desafiotecnico.subscription.dto.request.UserCreationRequest;
 import com.desafiotecnico.subscription.dto.response.SubscriptionResponse;
 import com.desafiotecnico.subscription.error.ApiError;
-import com.desafiotecnico.subscription.repository.SubscriptionRepository;
 import com.desafiotecnico.subscription.repository.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
+import net.datafaker.Faker;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -30,105 +31,133 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 public class SubscriptionControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @Autowired
-    private UserRepository userRepository;
+        @Autowired
+        private UserRepository userRepository;
 
-    @Autowired
-    private SubscriptionRepository subscriptionRepository;
+        private final Faker faker = new Faker();
 
-    @BeforeEach
-    void setUp() {
-        subscriptionRepository.deleteAll();
-        userRepository.deleteAll();
-    }
+        public MvcResult postUser(UserCreationRequest request) throws JsonProcessingException, Exception {
 
-    @Test
-    void createSubscription_WithValidUser_ReturnsCreated() throws Exception {
-        // Given a user
-        User user = userRepository.save(User.builder()
-                .name("John Subscription")
-                .email("sub@example.com")
-                .build());
+                return mockMvc.perform(post("/users")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isCreated())
+                                .andReturn();
+        }
 
-        var request = SubscriptionRequest.builder()
-                .userId(user.getId())
-                .plan(Plan.PREMIUM.getName())
-                .build();
+        @Test
+        void createSubscription_WithValidUser() throws Exception {
 
-        // When/Then
-        MvcResult result = mockMvc.perform(post("/subscriptions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andReturn();
+                var request = UserCreationRequest.builder()
+                                .name(faker.name().fullName())
+                                .email(faker.internet().emailAddress())
+                                .build();
 
-        SubscriptionResponse response = objectMapper.readValue(result.getResponse().getContentAsString(),
-                SubscriptionResponse.class);
+                var createdUserResult = postUser(request);
 
-        log.info("Subscription created: {}", response);
+                User createdUser = objectMapper.readValue(createdUserResult.getResponse().getContentAsString(),
+                                User.class);
 
-        assertNotNull(response.getId());
-        assertEquals(user.getId(), response.getUserId());
-        assertEquals(Plan.PREMIUM, response.getPlan());
-        assertEquals(com.desafiotecnico.subscription.domain.SubscriptionStatus.ATIVA, response.getStatus());
+                SubscriptionRequest subscriptionRequest = SubscriptionRequest.builder()
+                                .userId(createdUser.getId())
+                                .plan(Plan.BASICO.getName())
+                                .build();
 
-    }
+                MvcResult result = mockMvc.perform(post("/subscriptions")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(subscriptionRequest)))
+                                .andExpect(status().isCreated())
+                                .andReturn();
 
-    @Test
-    void createSubscription_UserNotFound_ReturnsError() throws Exception {
-        var request = SubscriptionRequest.builder()
-                .userId(UUID.randomUUID())
-                .plan(Plan.BASICO.getName())
-                .build();
+                SubscriptionResponse response = objectMapper.readValue(result.getResponse().getContentAsString(),
+                                SubscriptionResponse.class);
 
-        MvcResult result = mockMvc.perform(post("/subscriptions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andReturn();
+                log.info("Subscription created: {}", response);
 
-        var apiError = objectMapper.readValue(result.getResponse().getContentAsString(), ApiError.class);
-        assertEquals("USER_NOT_FOUND", apiError.getCode());
-    }
+                assertNotNull(response.getId());
+                assertEquals(createdUser.getId(), response.getUserId());
+                assertEquals(Plan.BASICO.getName(), response.getPlan());
 
-    @Test
-    void createSubscription_ActiveSubscriptionExists_ReturnsError() throws Exception {
-        // Given a user with active subscription
-        User user = userRepository.save(User.builder()
-                .name("Jane Active")
-                .email("active@example.com")
-                .build());
+        }
 
-        // Create first subscription
-        var request1 = SubscriptionRequest.builder()
-                .userId(user.getId())
-                .plan(Plan.BASICO.getName())
-                .build();
+        @Test
+        void createSubscription_UserNotFound_ReturnsError() throws Exception {
+                var request = SubscriptionRequest.builder()
+                                .userId(UUID.randomUUID())
+                                .plan(Plan.BASICO.getName())
+                                .build();
 
-        mockMvc.perform(post("/subscriptions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request1)))
-                .andExpect(status().isCreated());
+                MvcResult result = mockMvc.perform(post("/subscriptions")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isBadRequest())
+                                .andReturn();
 
-        // Try to create second subscription
-        var request2 = SubscriptionRequest.builder()
-                .userId(user.getId())
-                .plan(Plan.PREMIUM.getName())
-                .build();
+                var apiError = objectMapper.readValue(result.getResponse().getContentAsString(), ApiError.class);
+                assertEquals("USER_NOT_FOUND", apiError.getCode());
+        }
 
-        MvcResult result = mockMvc.perform(post("/subscriptions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request2)))
-                .andExpect(status().isBadRequest())
-                .andReturn();
+        @Test
+        void createSubscription_ActiveSubscriptionExists_ReturnsError() throws Exception {
+                // Given a user with active subscription
+                User user = userRepository.save(User.builder()
+                                .name(faker.name().fullName())
+                                .email(faker.internet().emailAddress())
+                                .build());
 
-        var apiError = objectMapper.readValue(result.getResponse().getContentAsString(), ApiError.class);
-        assertEquals("ACTIVE_SUBSCRIPTION_EXISTS", apiError.getCode());
-    }
+                // Create first subscription
+                var request1 = SubscriptionRequest.builder()
+                                .userId(user.getId())
+                                .plan(Plan.BASICO.getName())
+                                .build();
+
+                mockMvc.perform(post("/subscriptions")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request1)))
+                                .andExpect(status().isCreated());
+
+                // Try to create second subscription
+                var request2 = SubscriptionRequest.builder()
+                                .userId(user.getId())
+                                .plan(Plan.PREMIUM.getName())
+                                .build();
+
+                MvcResult result = mockMvc.perform(post("/subscriptions")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request2)))
+                                .andReturn();
+
+                var apiError = objectMapper.readValue(result.getResponse().getContentAsString(), ApiError.class);
+                assertEquals("ACTIVE_SUBSCRIPTION_EXISTS", apiError.getCode());
+        }
+
+        @Test
+        void createSubscription_WithInvalidPlan_ReturnsBadRequest() throws Exception {
+                // Given a user
+                User user = userRepository.save(User.builder()
+                                .name(faker.name().fullName())
+                                .email(faker.internet().emailAddress())
+                                .build());
+
+                // Try to create subscription with invalid plan
+                var request = SubscriptionRequest.builder()
+                                .userId(user.getId())
+                                .plan("INVALID_PLAN_NAME")
+                                .build();
+
+                MvcResult result = mockMvc.perform(post("/subscriptions")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isBadRequest())
+                                .andReturn();
+
+                var apiError = objectMapper.readValue(result.getResponse().getContentAsString(), ApiError.class);
+                assertEquals("INVALID_PLAN", apiError.getCode());
+        }
 }

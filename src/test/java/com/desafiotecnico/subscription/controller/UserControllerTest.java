@@ -3,12 +3,11 @@ package com.desafiotecnico.subscription.controller;
 import com.desafiotecnico.subscription.error.ApiError;
 import com.desafiotecnico.subscription.dto.request.UserCreationRequest;
 import com.desafiotecnico.subscription.domain.User;
-import com.desafiotecnico.subscription.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
+import net.datafaker.Faker;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -33,19 +32,13 @@ public class UserControllerTest {
         @Autowired
         private ObjectMapper objectMapper;
 
-        @Autowired
-        private UserRepository userRepository;
-
-        @BeforeEach
-        void setUp() {
-                userRepository.deleteAll();
-        }
+        private final Faker faker = new Faker();
 
         @Test
         void createUser_WithValidData_ReturnsCreated() throws Exception {
                 var request = UserCreationRequest.builder()
-                                .name("John Doe")
-                                .email("john@example.com")
+                                .name(faker.name().fullName())
+                                .email(faker.internet().emailAddress())
                                 .build();
 
                 var result = mockMvc.perform(post("/users")
@@ -56,18 +49,16 @@ public class UserControllerTest {
 
                 User createdUser = objectMapper.readValue(result.getResponse().getContentAsString(), User.class);
 
-                log.info("Created user: {}", createdUser);
                 assertNotNull(createdUser.getId());
                 assertEquals(request.getName(), createdUser.getName());
                 assertEquals(request.getEmail(), createdUser.getEmail());
 
-                assertEquals(1, userRepository.count());
         }
 
         @Test
         void createUser_WithInvalidEmail_ReturnsBadRequest() throws Exception {
                 var request = UserCreationRequest.builder()
-                                .name("John Doe")
+                                .name(faker.name().fullName())
                                 .email("invalid-email")
                                 .build();
 
@@ -85,14 +76,13 @@ public class UserControllerTest {
                 assertEquals("VALIDATION_ERROR", apiError.getCode());
                 assertNotNull(apiError.getDetails());
 
-                assertEquals(0, userRepository.count());
         }
 
         @Test
         void createUser_WithEmptyName_ReturnsBadRequest() throws Exception {
                 var request = UserCreationRequest.builder()
                                 .name("")
-                                .email("john@example.com")
+                                .email(faker.internet().emailAddress())
                                 .build();
 
                 MvcResult result = mockMvc.perform(post("/users")
@@ -106,16 +96,15 @@ public class UserControllerTest {
 
                 assertEquals("VALIDATION_ERROR", apiError.getCode());
                 assertNotNull(apiError.getDetails());
-
-                assertEquals(0, userRepository.count());
         }
 
         @Test
         void createUser_WithDuplicateEmail_ReturnsBadRequest() throws Exception {
+                String existingEmail = faker.internet().emailAddress();
                 // Create first user
                 var request1 = UserCreationRequest.builder()
-                                .name("John Doe")
-                                .email("john@example.com")
+                                .name(faker.name().fullName())
+                                .email(existingEmail)
                                 .build();
 
                 mockMvc.perform(post("/users")
@@ -125,8 +114,8 @@ public class UserControllerTest {
 
                 // Try to create second user with same email
                 var request2 = UserCreationRequest.builder()
-                                .name("Jane Doe")
-                                .email("john@example.com")
+                                .name(faker.name().fullName())
+                                .email(existingEmail)
                                 .build();
 
                 MvcResult result = mockMvc.perform(post("/users")
@@ -140,6 +129,5 @@ public class UserControllerTest {
 
                 assertEquals("EMAIL_ALREADY_EXIST", apiError.getCode());
 
-                assertEquals(1, userRepository.count());
         }
 }

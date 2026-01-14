@@ -1,7 +1,5 @@
-package com.desafiotecnico.subscription.config;
+package com.desafiotecnico.subscription.error;
 
-import com.desafiotecnico.subscription.error.ApiError;
-import com.desafiotecnico.subscription.error.CodedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
-public class ControllerAdviceConfig {
+public class GlobalExceptionHandler {
 
     @ExceptionHandler(CodedException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(CodedException ex) {

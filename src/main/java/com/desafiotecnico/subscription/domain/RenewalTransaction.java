@@ -6,29 +6,30 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "subscriptions")
+@Table(name = "renewal_transactions")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Subscription {
+public class RenewalTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private UUID userId;
+    @ManyToOne
+    @JoinColumn(name = "subscription_id", nullable = false)
+    private Subscription subscription;
 
-    private String plan;
+    private String status;
 
-    private LocalDate startDate;
-    private LocalDate expirationDate;
+    private LocalDateTime dataInicio;
 
-    @Enumerated(EnumType.STRING)
-    private SubscriptionStatus status;
+    private LocalDateTime dataFinalizacao;
 
+    private Integer paymentAttempts;
 }

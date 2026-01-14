@@ -27,7 +27,7 @@ public class SubscriptionResponse {
     @JsonProperty("dataExpiracao")
     private LocalDate expirationDate;
 
-    private SubscriptionStatus status;
+    @JsonProperty("statusRenovacao")
 
     public static SubscriptionResponse fromInternal(Subscription subscription) {
         return SubscriptionResponse.builder()
@@ -36,7 +36,6 @@ public class SubscriptionResponse {
                 .plan(subscription.getPlan())
                 .startDate(subscription.getStartDate())
                 .expirationDate(subscription.getExpirationDate())
-                .status(subscription.getStatus())
                 .build();
     }
 }
