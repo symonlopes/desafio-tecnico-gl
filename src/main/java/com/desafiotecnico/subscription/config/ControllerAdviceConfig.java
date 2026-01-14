@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,5 +34,23 @@ public class GlobalExceptionHandler {
                 .details(errors)
                 .build();
         return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        if (ex.getMessage() != null && ex.getMessage().contains("subscriptions_plan_check")) {
+            ApiError error = ApiError.builder()
+                    .code("INVALID_PLAN")
+                    .description("Invalid plan selected")
+                    .build();
+            return ResponseEntity.badRequest().body(error);
+        }
+
+        // Fallback for other data integrity violations
+        ApiError error = ApiError.builder()
+                .code("DATA_INTEGRITY_VIOLATION")
+                .description("Data integrity violation")
+                .build();
+        return ResponseEntity.status(409).body(error);
     }
 }
