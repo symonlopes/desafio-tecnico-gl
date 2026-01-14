@@ -83,6 +83,7 @@ public class SubscriptionControllerTest {
                 assertNotNull(response.getId());
                 assertEquals(createdUser.getId(), response.getUserId());
                 assertEquals(Plan.BASICO.getName(), response.getPlan());
+                assertEquals(Plan.BASICO.getPriceInCents(), response.getPriceInCents());
 
         }
 

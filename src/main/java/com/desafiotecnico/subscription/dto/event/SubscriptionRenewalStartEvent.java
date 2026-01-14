@@ -11,7 +11,9 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RenovationEvent {
+public class SubscriptionRenewalStartEvent {
+
     private UUID subscriptionId;
     private UUID transactionId;
+    private Integer priceInCents;
 }

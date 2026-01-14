@@ -25,6 +25,9 @@ public class Subscription {
 
     private String plan;
 
+    @Column(name = "price_in_cents")
+    private Integer priceInCents;
+
     private LocalDate startDate;
     private LocalDate expirationDate;
 

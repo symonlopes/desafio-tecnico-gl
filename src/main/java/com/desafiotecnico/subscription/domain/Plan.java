@@ -16,4 +16,14 @@ public final class Plan {
         this.name = name;
         this.priceInCents = priceInCents;
     }
+
+    public static Plan fromName(String name) {
+        if (BASICO.name.equals(name))
+            return BASICO;
+        if (PREMIUM.name.equals(name))
+            return PREMIUM;
+        if (FAMILIA.name.equals(name))
+            return FAMILIA;
+        throw new IllegalArgumentException("Invalid plan name: " + name);
+    }
 }

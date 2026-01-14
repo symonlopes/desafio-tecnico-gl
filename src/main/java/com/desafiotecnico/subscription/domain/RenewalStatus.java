@@ -6,9 +6,12 @@ import lombok.Getter;
 public final class RenewalStatus {
 
     public static final RenewalStatus NEW = new RenewalStatus("NEW");
+    public static final RenewalStatus WAITING_PAYMENT_GATEWAY_RESPONSE = new RenewalStatus(
+            "WAITING_PAYMENT_GATEWAY_RESPONSE");
     public static final RenewalStatus PROCESSING = new RenewalStatus("PROCESSING");
     public static final RenewalStatus RENEWED = new RenewalStatus("RENEWED");
     public static final RenewalStatus FAILED = new RenewalStatus("FAILED");
+    public static final RenewalStatus WAITING_RETRY = new RenewalStatus("WAITING_RETRY");
     public static final RenewalStatus FINISHED = new RenewalStatus("FINISHED");
 
     private final String name;

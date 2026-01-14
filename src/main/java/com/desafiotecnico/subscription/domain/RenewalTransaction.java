@@ -32,4 +32,7 @@ public class RenewalTransaction {
     private LocalDateTime dataFinalizacao;
 
     private Integer paymentAttempts;
+
+    @Column(name = "price_in_cents")
+    private Integer priceInCents;
 }

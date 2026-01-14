@@ -3,13 +3,13 @@ package com.desafiotecnico.subscription.controller;
 import com.desafiotecnico.subscription.domain.Plan;
 import com.desafiotecnico.subscription.domain.RenewalStatus;
 import com.desafiotecnico.subscription.domain.Subscription;
-import com.desafiotecnico.subscription.dto.request.TriggerRenovationRequest;
+import com.desafiotecnico.subscription.dto.request.SubscriptionRenewalTrigger;
 import com.desafiotecnico.subscription.repository.SubscriptionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import com.desafiotecnico.subscription.service.RenovationProducer;
+import com.desafiotecnico.subscription.service.SubscriptionRenewalProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,7 +31,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("kafka")
+
 public class RenovationTriggerTest {
 
         @Autowired
@@ -47,7 +47,7 @@ public class RenovationTriggerTest {
         private com.desafiotecnico.subscription.repository.RenewalTransactionRepository renewalTransactionRepository;
 
         @MockitoBean
-        private RenovationProducer renovationProducer;
+        private SubscriptionRenewalProducer renovationProducer;
 
         private final Faker faker = new Faker();
 
@@ -57,6 +57,7 @@ public class RenovationTriggerTest {
                 var sub = Subscription.builder()
                                 .userId(UUID.randomUUID())
                                 .plan(Plan.BASICO.getName())
+                                .priceInCents(Plan.BASICO.getPriceInCents())
                                 .status(com.desafiotecnico.subscription.domain.SubscriptionStatus.ATIVA)
                                 .startDate(LocalDate.now().minusMonths(1))
                                 .expirationDate(LocalDate.now().plusDays(2)) // Expires in 2 days from now
@@ -64,13 +65,13 @@ public class RenovationTriggerTest {
 
                 subscriptionRepository.save(sub);
 
-                var request = com.desafiotecnico.subscription.dto.request.TriggerRenovationRequest.builder()
-                                .amount(10)
-                                .dateToProccess(LocalDate.now().plusDays(2))
+                var request = com.desafiotecnico.subscription.dto.request.SubscriptionRenewalTrigger.builder()
+                                .maxSubscriptions(10)
+                                .dateToProcess(LocalDate.now().plusDays(2))
                                 .build();
 
                 // When
-                mockMvc.perform(post("/subscriptions/renovation/trigger")
+                mockMvc.perform(post("/subscriptions/renewal/trigger")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isOk());
@@ -83,9 +84,10 @@ public class RenovationTriggerTest {
                                 .orElseThrow();
 
                 assertEquals(RenewalStatus.NEW.getName(), transaction.getStatus());
+                assertEquals(1990, transaction.getPriceInCents());
 
                 verify(renovationProducer, timeout(1000).atLeastOnce())
-                                .sendRenovationStart(Mockito
-                                                .any(com.desafiotecnico.subscription.dto.event.RenovationEvent.class));
+                                .sendRenewalStart(Mockito
+                                                .any(com.desafiotecnico.subscription.dto.event.SubscriptionRenewalStartEvent.class));
         }
 }

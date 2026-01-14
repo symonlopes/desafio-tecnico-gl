@@ -2,7 +2,7 @@ package com.desafiotecnico.subscription.controller;
 
 import com.desafiotecnico.subscription.domain.Subscription;
 import com.desafiotecnico.subscription.dto.request.SubscriptionRequest;
-import com.desafiotecnico.subscription.dto.request.TriggerRenovationRequest;
+import com.desafiotecnico.subscription.dto.request.SubscriptionRenewalTrigger;
 import com.desafiotecnico.subscription.dto.response.SubscriptionResponse;
 import com.desafiotecnico.subscription.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +31,9 @@ public class SubscriptionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(SubscriptionResponse.fromInternal(subscription));
     }
 
-    @PostMapping("/renovation/trigger")
-    public ResponseEntity<Void> triggerRenovation(@RequestBody @Valid TriggerRenovationRequest request) {
-        subscriptionService.triggerRenovation(request.getAmount(), request.getDateToProccess());
+    @PostMapping("/renewal/trigger")
+    public ResponseEntity<Void> triggerRenovation(@RequestBody @Valid SubscriptionRenewalTrigger request) {
+        subscriptionService.triggerRenovation(request.getMaxSubscriptions(), request.getDateToProcess());
         return ResponseEntity.ok().build();
     }
 }

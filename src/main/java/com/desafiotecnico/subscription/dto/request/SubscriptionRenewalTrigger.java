@@ -13,12 +13,12 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TriggerRenovationRequest {
+public class SubscriptionRenewalTrigger {
 
     @Min(value = 1, message = "Amount must be at least 1")
     @Max(value = 500000, message = "Amount must be at most 500000")
-    private int amount;
+    private int maxSubscriptions;
 
     @Builder.Default
-    private LocalDate dateToProccess = LocalDate.now();
+    private LocalDate dateToProcess = LocalDate.now();
 }

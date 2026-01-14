@@ -27,13 +27,18 @@ public class SubscriptionResponse {
     @JsonProperty("dataExpiracao")
     private LocalDate expirationDate;
 
+    @JsonProperty("precoEmCentavos")
+    private Integer priceInCents;
+
     @JsonProperty("statusRenovacao")
+    private String renovationStatus;
 
     public static SubscriptionResponse fromInternal(Subscription subscription) {
         return SubscriptionResponse.builder()
                 .id(subscription.getId())
                 .userId(subscription.getUserId())
                 .plan(subscription.getPlan())
+                .priceInCents(subscription.getPriceInCents())
                 .startDate(subscription.getStartDate())
                 .expirationDate(subscription.getExpirationDate())
                 .build();
