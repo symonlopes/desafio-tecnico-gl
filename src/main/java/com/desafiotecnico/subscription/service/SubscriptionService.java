@@ -8,6 +8,7 @@ import com.desafiotecnico.subscription.domain.RenewalTransaction;
 import com.desafiotecnico.subscription.dto.event.SubscriptionRenewalStartEvent;
 import com.desafiotecnico.subscription.domain.Subscription;
 import com.desafiotecnico.subscription.error.CodedException;
+import com.desafiotecnico.subscription.error.UnavailableGatewayException;
 import com.desafiotecnico.subscription.repository.SubscriptionRepository;
 import com.desafiotecnico.subscription.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -65,12 +66,17 @@ public class SubscriptionService {
 
     @Transactional
     public void cancelSubscription(UUID subscriptionId) {
-        log.info("Canceling subscription {}", subscriptionId);
-        Subscription subscription = subscriptionRepository.findById(subscriptionId)
-                .orElseThrow(() -> new IllegalArgumentException("Subscription not found"));
+        try {
 
-        subscription.setStatus(SubscriptionStatus.CANCELADA);
-        subscriptionRepository.save(subscription);
+            log.info("Cencelando inscrição {}", subscriptionId);
+            Subscription subscription = subscriptionRepository.findById(subscriptionId)
+                    .orElseThrow(() -> new IllegalArgumentException("Subscription not found"));
+
+            subscription.setStatus(SubscriptionStatus.CANCELADA);
+            subscriptionRepository.save(subscription);
+        } catch (Exception e) {
+            log.error("Erro ao processar cancelamento de inscrição: ", e);
+        }
     }
 
     @Transactional
@@ -119,7 +125,13 @@ public class SubscriptionService {
             transaction.setDataFinalizacao(java.time.LocalDateTime.now());
             renewalTransactionRepository.save(transaction);
 
-            // Should initiate next cycle? For now just marking as renewed.
+            // Deve atualar a Subscription para a próxima data de vencimento
+            subscriptionRepository.findById(transaction.getSubscription().getId())
+                    .ifPresent(sub -> {
+                        sub.setExpirationDate(sub.getExpirationDate().plusMonths(1));
+                        sub.setLastRenewalDate(LocalDate.now());
+                        subscriptionRepository.save(sub);
+                    });
 
         }
 
@@ -163,9 +175,8 @@ public class SubscriptionService {
     }
 
     public void processSubscriptionStartRenewal(SubscriptionRenewalStartEvent event) {
-        log.info("Processing renovation event for subscription {}. Transaction ID: {}", event.getSubscriptionId(),
+        log.info("Processando mensagem de renovação da inscrição {}. Id de transação: {}", event.getSubscriptionId(),
                 event.getTransactionId());
-        // Simulating logic that would call the Payment Gateway
-        // In a real scenario, this would make an HTTP request to the gateway.
+        // throw new UnavailableGatewayException("Simulando gateway fora do ar...");
     }
 }

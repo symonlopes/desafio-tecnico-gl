@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("kafka")
-public class PaymentCallbackControllerTest {
+public class CallbackControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

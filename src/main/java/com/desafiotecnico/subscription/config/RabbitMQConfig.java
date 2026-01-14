@@ -44,7 +44,8 @@ public class RabbitMQConfig {
 
     @Bean
     public Binding renewalStartBinding(Queue renewalStartQueue, CustomExchange subscriptionExchange) {
-        return BindingBuilder.bind(renewalStartQueue).to(subscriptionExchange).with(QUEUE_SUBSCRIPTION_RENEWAL_START).noargs();
+        return BindingBuilder.bind(renewalStartQueue).to(subscriptionExchange).with(QUEUE_SUBSCRIPTION_RENEWAL_START)
+                .noargs();
     }
 
     @Bean
@@ -54,11 +55,13 @@ public class RabbitMQConfig {
 
     @Bean
     public Binding paymentResponseBinding(Queue paymentResponseQueue, CustomExchange subscriptionExchange) {
-        return BindingBuilder.bind(paymentResponseQueue).to(subscriptionExchange).with(QUEUE_PAYMENT_GATEWAY_RESPONSE).noargs();
+        return BindingBuilder.bind(paymentResponseQueue).to(subscriptionExchange).with(QUEUE_PAYMENT_GATEWAY_RESPONSE)
+                .noargs();
     }
 
     @Bean
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
+
 }

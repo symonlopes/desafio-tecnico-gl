@@ -12,7 +12,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SubscriptionRenewalStartEvent {
-
     private UUID subscriptionId;
     private UUID transactionId;
     private Integer priceInCents;
