@@ -1,7 +1,7 @@
 package com.desafiotecnico.subscription.controller;
 
 import com.desafiotecnico.subscription.dto.request.PaymentCallbackRequest;
-import com.desafiotecnico.subscription.service.SubscriptionRenewalProducer;
+import com.desafiotecnico.subscription.producers.SubscriptionRenewalProducer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,33 +24,34 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("kafka")
 public class CallbackControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockBean
-    private SubscriptionRenewalProducer renovationProducer;
+        @MockBean
+        private SubscriptionRenewalProducer renovationProducer;
 
-    @Test
-    void processCallback_ShouldSendPaymentResponse() throws Exception {
-        // Given
-        UUID transactionId = UUID.randomUUID();
-        PaymentCallbackRequest request = PaymentCallbackRequest.builder()
-                .transactionId(transactionId)
-                .success(true)
-                .message("Success")
-                .build();
+        @Test
+        void processCallback_ShouldSendPaymentResponse() throws Exception {
+                // Given
+                UUID transactionId = UUID.randomUUID();
+                PaymentCallbackRequest request = PaymentCallbackRequest.builder()
+                                .transactionId(transactionId)
+                                .success(true)
+                                .message("Success")
+                                .build();
 
-        // When
-        mockMvc.perform(post("/payments/callback")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
+                // When
+                mockMvc.perform(post("/payments/callback")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk());
 
-        // Then
-        verify(renovationProducer)
-                .sendPaymentResponse(any(com.desafiotecnico.subscription.dto.event.PaymentGatewayResponse.class));
-    }
+                // Then
+                verify(renovationProducer)
+                                .sendPaymentResponse(any(
+                                                com.desafiotecnico.subscription.dto.event.PaymentGatewayResponse.class));
+        }
 }

@@ -1,7 +1,9 @@
-package com.desafiotecnico.subscription.service;
+package com.desafiotecnico.subscription.consumers;
 
 import com.desafiotecnico.subscription.config.RabbitMQConfig;
 import com.desafiotecnico.subscription.dto.event.SubscriptionCancelEvent;
+import com.desafiotecnico.subscription.service.SubscriptionService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;

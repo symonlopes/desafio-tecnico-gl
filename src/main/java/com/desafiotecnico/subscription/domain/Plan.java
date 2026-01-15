@@ -3,27 +3,26 @@ package com.desafiotecnico.subscription.domain;
 import lombok.Getter;
 
 @Getter
-public final class Plan {
+public enum Plan {
 
-    public static final Plan BASICO = new Plan("BASICO", 1990);
-    public static final Plan PREMIUM = new Plan("PREMIUM", 3990);
-    public static final Plan FAMILIA = new Plan("FAMILIA", 5990);
+    BASICO("BASICO", 1990),
+    PREMIUM("PREMIUM", 3990),
+    FAMILIA("FAMILIA", 5990);
 
     private final String name;
     private final int priceInCents;
 
-    public Plan(String name, int priceInCents) {
+    Plan(String name, int priceInCents) {
         this.name = name;
         this.priceInCents = priceInCents;
     }
 
     public static Plan fromName(String name) {
-        if (BASICO.name.equals(name))
-            return BASICO;
-        if (PREMIUM.name.equals(name))
-            return PREMIUM;
-        if (FAMILIA.name.equals(name))
-            return FAMILIA;
+        for (Plan plan : values()) {
+            if (plan.name.equals(name)) {
+                return plan;
+            }
+        }
         throw new IllegalArgumentException("Invalid plan name: " + name);
     }
 }

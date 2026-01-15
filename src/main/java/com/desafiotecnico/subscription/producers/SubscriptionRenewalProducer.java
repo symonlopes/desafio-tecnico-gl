@@ -1,4 +1,4 @@
-package com.desafiotecnico.subscription.service;
+package com.desafiotecnico.subscription.producers;
 
 import com.desafiotecnico.subscription.dto.event.SubscriptionCancelEvent;
 import com.desafiotecnico.subscription.dto.event.SubscriptionRenewalStartEvent;

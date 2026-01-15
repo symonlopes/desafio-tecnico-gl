@@ -1,8 +1,10 @@
-package com.desafiotecnico.subscription.service;
+package com.desafiotecnico.subscription.consumers;
 
 import com.desafiotecnico.subscription.config.RabbitMQConfig;
 import com.desafiotecnico.subscription.dto.event.PaymentGatewayResponse;
 import com.desafiotecnico.subscription.error.UnavailableGatewayException;
+import com.desafiotecnico.subscription.service.SubscriptionService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -21,7 +23,9 @@ public class PaymentCallbackConsumer {
         try {
             subscriptionService.processPaymentCallback(event);
         } catch (UnavailableGatewayException e) {
-            log.warn("Gateway unavailable during payment callback processing for transaction {}. Message will be retried.", event.getTransactionId());
+            log.warn(
+                    "Gateway unavailable during payment callback processing for transaction {}. Message will be retried.",
+                    event.getTransactionId());
             throw e; // Spring AMQP retry mechanism will handle this
         }
     }

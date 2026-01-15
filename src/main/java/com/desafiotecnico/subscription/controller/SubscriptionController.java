@@ -2,7 +2,7 @@ package com.desafiotecnico.subscription.controller;
 
 import com.desafiotecnico.subscription.domain.Subscription;
 import com.desafiotecnico.subscription.dto.request.SubscriptionRequest;
-import com.desafiotecnico.subscription.dto.request.SubscriptionRenewalTrigger;
+
 import com.desafiotecnico.subscription.dto.response.SubscriptionResponse;
 import com.desafiotecnico.subscription.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/subscriptions")
@@ -31,9 +29,4 @@ public class SubscriptionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(SubscriptionResponse.fromInternal(subscription));
     }
 
-    @PostMapping("/renewal/trigger")
-    public ResponseEntity<Void> triggerRenovation(@RequestBody @Valid SubscriptionRenewalTrigger request) {
-        subscriptionService.triggerRenovation(request.getMaxSubscriptions(), request.getDateToProcess());
-        return ResponseEntity.ok().build();
-    }
 }

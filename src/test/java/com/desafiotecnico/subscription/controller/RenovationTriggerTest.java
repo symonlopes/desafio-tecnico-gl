@@ -4,12 +4,12 @@ import com.desafiotecnico.subscription.domain.Plan;
 import com.desafiotecnico.subscription.domain.RenewalStatus;
 import com.desafiotecnico.subscription.domain.Subscription;
 import com.desafiotecnico.subscription.dto.request.SubscriptionRenewalTrigger;
+import com.desafiotecnico.subscription.producers.SubscriptionRenewalProducer;
 import com.desafiotecnico.subscription.repository.SubscriptionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import com.desafiotecnico.subscription.service.SubscriptionRenewalProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -71,7 +71,7 @@ public class RenovationTriggerTest {
                                 .build();
 
                 // When
-                mockMvc.perform(post("/subscriptions/renewal/trigger")
+                mockMvc.perform(post("/triggers/renewal")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isOk());

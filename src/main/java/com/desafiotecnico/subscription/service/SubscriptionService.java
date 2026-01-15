@@ -3,12 +3,14 @@ package com.desafiotecnico.subscription.service;
 import com.desafiotecnico.subscription.domain.SubscriptionStatus;
 import com.desafiotecnico.subscription.dto.event.PaymentGatewayResponse;
 import com.desafiotecnico.subscription.dto.request.SubscriptionRequest;
+import com.desafiotecnico.subscription.domain.Plan;
 import com.desafiotecnico.subscription.domain.RenewalStatus;
 import com.desafiotecnico.subscription.domain.RenewalTransaction;
 import com.desafiotecnico.subscription.dto.event.SubscriptionRenewalStartEvent;
 import com.desafiotecnico.subscription.domain.Subscription;
 import com.desafiotecnico.subscription.error.CodedException;
 import com.desafiotecnico.subscription.error.UnavailableGatewayException;
+import com.desafiotecnico.subscription.producers.SubscriptionRenewalProducer;
 import com.desafiotecnico.subscription.repository.SubscriptionRepository;
 import com.desafiotecnico.subscription.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -45,9 +47,9 @@ public class SubscriptionService {
             throw new CodedException("ACTIVE_SUBSCRIPTION_EXISTS", "Usuário já possui uma assinatura ativa.");
         }
 
-        com.desafiotecnico.subscription.domain.Plan planEnum;
+        Plan planEnum;
         try {
-            planEnum = com.desafiotecnico.subscription.domain.Plan.fromName(request.getPlan());
+            planEnum = Plan.fromName(request.getPlan());
         } catch (IllegalArgumentException e) {
             throw new CodedException("INVALID_PLAN", "Plano inválido.");
         }
