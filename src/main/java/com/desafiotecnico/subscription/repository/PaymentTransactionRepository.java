@@ -8,6 +8,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface RenewalTransactionRepository extends JpaRepository<RenewalTransaction, UUID> {
+public interface PaymentTransactionRepository extends JpaRepository<RenewalTransaction, UUID> {
     Optional<RenewalTransaction> findBySubscriptionIdAndStatus(UUID subscriptionId, String status);
 }

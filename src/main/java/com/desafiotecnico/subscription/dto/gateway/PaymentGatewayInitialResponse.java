@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentGatewayInitialResponse {
-    private String externalId;
+    private String customId;
     private String errorCode;
-    private String description;
+    private String errorDescription;
 }

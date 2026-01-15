@@ -1,10 +1,10 @@
 package com.desafiotecnico.subscription.service;
 
-import com.desafiotecnico.subscription.domain.TransactionStatus;
+import com.desafiotecnico.subscription.domain.PaymentTransactionStatus;
 import com.desafiotecnico.subscription.domain.RenewalTransaction;
 import com.desafiotecnico.subscription.dto.event.SubscriptionRenewalStartEvent;
 import com.desafiotecnico.subscription.producers.SubscriptionRenewalProducer;
-import com.desafiotecnico.subscription.repository.RenewalTransactionRepository;
+import com.desafiotecnico.subscription.repository.PaymentTransactionRepository;
 import com.desafiotecnico.subscription.repository.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ public class RenovationTriggerService {
 
         private final SubscriptionRepository subscriptionRepository;
         private final SubscriptionRenewalProducer subscriptionRenewalProducer;
-        private final RenewalTransactionRepository renewalTransactionRepository;
+        private final PaymentTransactionRepository renewalTransactionRepository;
 
         @Transactional
         public void triggerRenovation(int batchSize, LocalDate dateToProccess) {
@@ -38,9 +38,9 @@ public class RenovationTriggerService {
 
                         var transaction = RenewalTransaction.builder()
                                         .subscription(sub)
-                                        .status(TransactionStatus.NEW.name())
+                                        .status(PaymentTransactionStatus.CREATED.name())
                                         .dataInicio(java.time.LocalDateTime.now())
-                                        .paymentAttempts(0)
+                                        .paymentErrorCount(0)
                                         .priceInCents(sub.getPriceInCents())
                                         .build();
 

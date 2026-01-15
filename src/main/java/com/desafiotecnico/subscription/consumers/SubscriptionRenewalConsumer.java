@@ -17,9 +17,9 @@ public class SubscriptionRenewalConsumer {
 
     private final SubscriptionService subscriptionService;
 
-    @RabbitListener(queues = RabbitMQConfig.QUEUE_SUBSCRIPTION_RENEWAL_START)
+    @RabbitListener(queues = RabbitMQConfig.QUEUE_SUBSCRIPTION_RENEWAL_START, concurrency = "100")
     public void consumeRenovationStart(SubscriptionRenewalStartEvent event) {
         log.info("Mensagem de QUEUE_SUBSCRIPTION_RENEWAL_START recebida via RabbitMQ: {}", event);
-        subscriptionService.processSubscriptionStartRenewal(event);
+        subscriptionService.startPaymentTransaction(event);
     }
 }

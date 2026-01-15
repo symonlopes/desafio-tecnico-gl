@@ -52,6 +52,6 @@ public class RabbitSubscriptionRenewalProducer implements SubscriptionRenewalPro
     public void sendCancelTransaction(com.desafiotecnico.subscription.dto.event.TransactionCancelEvent event) {
         log.info("Sending cancel transaction message for transaction {} via RabbitMQ", event.getTransactionId());
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_SUBSCRIPTION,
-                RabbitMQConfig.QUEUE_TRANSACTION_CANCEL, event);
+                RabbitMQConfig.QUEUE_PAYMENT_TRANSACTION_CANCEL, event);
     }
 }

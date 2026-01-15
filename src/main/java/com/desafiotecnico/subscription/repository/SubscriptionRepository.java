@@ -1,7 +1,6 @@
 package com.desafiotecnico.subscription.repository;
 
 import com.desafiotecnico.subscription.domain.Subscription;
-import com.desafiotecnico.subscription.domain.SubscriptionStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,9 +19,12 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
 
     /*
      * Busca as assinaturas que não possuiem transações de renovação em aberto.
+     * Só dispara evento de renovação para assinaturas ativas.
      */
-    @Query("SELECT s FROM Subscription s WHERE s.expirationDate = :date " +
-            "AND NOT EXISTS (SELECT rt FROM RenewalTransaction rt WHERE rt.subscription = s AND rt.dataFinalizacao IS NULL)")
+    @Query(value = "SELECT s.* FROM subscriptions s " +
+            "WHERE s.expiration_date = :date " +
+            "AND s.status = 'ATIVA' " +
+            "AND NOT EXISTS (SELECT 1 FROM renewal_transactions rt WHERE rt.subscription_id = s.id AND rt.data_finalizacao IS NULL)", nativeQuery = true)
     List<Subscription> findSubscriptionToProccessPayment(@Param("date") LocalDate date, Pageable pageable);
 
 }
