@@ -26,7 +26,7 @@ public class CallbackController {
      * fila.
      */
     @PostMapping("/callback")
-    public ResponseEntity<Void> processCallback(@RequestBody @Valid PaymentCallbackRequest request) {
+    public ResponseEntity<Void> paymentCallbackProcess(@RequestBody @Valid PaymentCallbackRequest request) {
         log.info("Recebendo mensagem de callback de paramento para transação: {}.",
                 request.getTransactionId());
 

@@ -11,4 +11,6 @@ public interface SubscriptionRenewalProducer {
     void sendCancelSubscription(SubscriptionCancelEvent event);
 
     void sendPaymentResponse(com.desafiotecnico.subscription.dto.event.PaymentGatewayResponse event);
+
+    void sendCancelTransaction(com.desafiotecnico.subscription.dto.event.TransactionCancelEvent event);
 }

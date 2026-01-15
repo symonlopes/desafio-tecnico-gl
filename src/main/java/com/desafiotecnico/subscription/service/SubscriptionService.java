@@ -4,8 +4,8 @@ import com.desafiotecnico.subscription.domain.SubscriptionStatus;
 import com.desafiotecnico.subscription.dto.event.PaymentGatewayResponse;
 import com.desafiotecnico.subscription.dto.request.SubscriptionRequest;
 import com.desafiotecnico.subscription.domain.Plan;
-import com.desafiotecnico.subscription.domain.RenewalStatus;
-import com.desafiotecnico.subscription.domain.RenewalTransaction;
+import com.desafiotecnico.subscription.domain.TransactionStatus;
+
 import com.desafiotecnico.subscription.dto.event.SubscriptionRenewalStartEvent;
 import com.desafiotecnico.subscription.domain.Subscription;
 import com.desafiotecnico.subscription.error.CodedException;
@@ -13,14 +13,21 @@ import com.desafiotecnico.subscription.error.UnavailableGatewayException;
 import com.desafiotecnico.subscription.producers.SubscriptionRenewalProducer;
 import com.desafiotecnico.subscription.repository.SubscriptionRepository;
 import com.desafiotecnico.subscription.repository.UserRepository;
+import com.desafiotecnico.subscription.dto.event.TransactionCancelEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpEntity;
+import com.desafiotecnico.subscription.dto.gateway.PaymentGatewayInitialResponse;
+import com.desafiotecnico.subscription.dto.gateway.PaymentGatewayRequest;
+import org.springframework.web.client.HttpClientErrorException.BadRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +38,10 @@ public class SubscriptionService {
     private final UserRepository userRepository;
     private final SubscriptionRenewalProducer subscriptionRenewalProducer;
     private final com.desafiotecnico.subscription.repository.RenewalTransactionRepository renewalTransactionRepository;
+    private final RestTemplate restTemplate;
+
+    @Value("${integration.payments.url}")
+    private String paymentUrl;
 
     @Transactional
     public Subscription createSubscription(SubscriptionRequest request) {
@@ -82,38 +93,6 @@ public class SubscriptionService {
     }
 
     @Transactional
-    public void triggerRenovation(int batchSize, LocalDate dateToProccess) {
-        log.info("Disparando processo de renovação para no máximo {} registros, considerando a data {}.",
-                batchSize, dateToProccess);
-
-        var subscriptions = subscriptionRepository.findSubscriptionToProccessPayment(
-                dateToProccess,
-                PageRequest.of(0, batchSize));
-
-        log.info("Foram encontrados {} registros de incrições que serão renovadas.", subscriptions.size());
-
-        subscriptions.forEach(sub -> {
-
-            var transaction = RenewalTransaction.builder()
-                    .subscription(sub)
-                    .status(RenewalStatus.NEW.getName())
-                    .dataInicio(java.time.LocalDateTime.now())
-                    .paymentAttempts(0)
-                    .priceInCents(sub.getPriceInCents())
-                    .build();
-
-            renewalTransactionRepository.save(transaction);
-
-            subscriptionRenewalProducer.sendRenewalStart(SubscriptionRenewalStartEvent.builder()
-                    .subscriptionId(sub.getId())
-                    .transactionId(transaction.getId())
-                    .priceInCents(sub.getPriceInCents())
-                    .build());
-        });
-
-    }
-
-    @Transactional
     public void processPaymentCallback(PaymentGatewayResponse event) {
         log.info("Processing payment callback event for transaction {}", event.getTransactionId());
 
@@ -123,7 +102,7 @@ public class SubscriptionService {
 
         if (event.isSuccess()) {
             log.info("Payment successful for transaction {}", event.getTransactionId());
-            transaction.setStatus(RenewalStatus.RENEWED.getName());
+            transaction.setStatus(TransactionStatus.RENEWED.name());
             transaction.setDataFinalizacao(java.time.LocalDateTime.now());
             renewalTransactionRepository.save(transaction);
 
@@ -148,7 +127,7 @@ public class SubscriptionService {
             if (attempts < 3) {
                 log.info("Retrying payment for subscription {}. Attempt {}/3", transaction.getSubscription().getId(),
                         attempts);
-                transaction.setStatus(RenewalStatus.WAITING_RETRY.getName());
+                transaction.setStatus(TransactionStatus.WAITING_RETRY.name());
                 renewalTransactionRepository.save(transaction);
 
                 // Nesse ponto, essa mensagem deve ser enviada para ser consumida em 10
@@ -172,6 +151,13 @@ public class SubscriptionService {
                                 .subscriptionId(transaction.getSubscription().getId())
                                 .reason("Máximo de tentativas de processamento de pagamento foi atingido.")
                                 .build());
+
+                subscriptionRenewalProducer.sendCancelTransaction(TransactionCancelEvent.builder()
+                        .transactionId(transaction.getId())
+                        .subscriptionId(transaction.getSubscription().getId())
+                        .reason("Máximo de tentativas de processamento de pagamento foi atingido.")
+                        .occurredAt(java.time.LocalDateTime.now())
+                        .build());
             }
         }
     }
@@ -179,6 +165,35 @@ public class SubscriptionService {
     public void processSubscriptionStartRenewal(SubscriptionRenewalStartEvent event) {
         log.info("Processando mensagem de renovação da inscrição {}. Id de transação: {}", event.getSubscriptionId(),
                 event.getTransactionId());
-        // throw new UnavailableGatewayException("Simulando gateway fora do ar...");
+
+        try {
+            var gatewayRequest = PaymentGatewayRequest.builder()
+                    .amount(event.getPriceInCents())
+                    .customId(event.getTransactionId())
+                    .build();
+
+            var request = new HttpEntity<>(gatewayRequest);
+            log.info("Enviando request inicial para processamento de pagamento: {}", paymentUrl);
+            var response = restTemplate.postForObject(paymentUrl, request,
+                    PaymentGatewayInitialResponse.class);
+
+            if (response != null && response.getExternalId() != null) {
+                log.info("Pedido inicial de processamento de pagamento enviado com sucesso. External ID: {}",
+                        response.getExternalId());
+            }
+
+        } catch (BadRequest e) {
+            var errorResponse = e.getResponseBodyAs(PaymentGatewayInitialResponse.class);
+            if (errorResponse != null) {
+                log.error("Requisição inicial de pagamento falhou com código de erro: {} e descrição: {}",
+                        errorResponse.getErrorCode(),
+                        errorResponse.getDescription());
+            } else {
+                log.error("Requisição inicial de pagamento falhou com estrutura de erro desconhecida");
+            }
+        } catch (Exception e) {
+            log.error("Erro ao processar requisição inicial de pagamento", e);
+            throw new UnavailableGatewayException("Gateway indisponível: " + e.getMessage());
+        }
     }
 }

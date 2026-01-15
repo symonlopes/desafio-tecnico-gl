@@ -18,6 +18,7 @@ public class RabbitMQConfig {
     public static final String EXCHANGE_SUBSCRIPTION = "subscription.exchange";
     public static final String QUEUE_SUBSCRIPTION_RENEWAL_START = "subscription.renewal.start";
     public static final String QUEUE_SUBSCRIPTION_CANCEL = "subscription.cancel";
+    public static final String QUEUE_TRANSACTION_CANCEL = "transaction.cancel";
     public static final String QUEUE_PAYMENT_GATEWAY_RESPONSE = "payment.gateway.response";
 
     @Bean
@@ -38,6 +39,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue transactionCancelQueue() {
+        return new Queue(QUEUE_TRANSACTION_CANCEL, true);
+    }
+
+    @Bean
     public Queue paymentResponseQueue() {
         return new Queue(QUEUE_PAYMENT_GATEWAY_RESPONSE, true);
     }
@@ -51,6 +57,12 @@ public class RabbitMQConfig {
     @Bean
     public Binding cancelBinding(Queue cancelQueue, CustomExchange subscriptionExchange) {
         return BindingBuilder.bind(cancelQueue).to(subscriptionExchange).with(QUEUE_SUBSCRIPTION_CANCEL).noargs();
+    }
+
+    @Bean
+    public Binding transactionCancelBinding(Queue transactionCancelQueue, CustomExchange subscriptionExchange) {
+        return BindingBuilder.bind(transactionCancelQueue).to(subscriptionExchange).with(QUEUE_TRANSACTION_CANCEL)
+                .noargs();
     }
 
     @Bean

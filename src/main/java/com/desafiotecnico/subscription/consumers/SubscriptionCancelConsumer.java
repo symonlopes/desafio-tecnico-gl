@@ -18,7 +18,7 @@ public class SubscriptionCancelConsumer {
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE_SUBSCRIPTION_CANCEL)
     public void consumeSubscriptionCancel(SubscriptionCancelEvent event) {
-        log.info("Mensagem de cancelamento de inscrição recebida: {} Reason: {}",
+        log.info("Mensagem de cancelamento de inscrição recebida: {}, motivo: {}",
                 event.getSubscriptionId(),
                 event.getReason());
 

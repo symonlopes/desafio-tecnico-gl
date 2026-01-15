@@ -35,4 +35,7 @@ public class RenewalTransaction {
 
     @Column(name = "price_in_cents")
     private Integer priceInCents;
+
+    @Column(name = "cancellation_reason")
+    private String cancellationReason;
 }

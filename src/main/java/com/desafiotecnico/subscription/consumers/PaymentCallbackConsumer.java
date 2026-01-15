@@ -17,14 +17,18 @@ public class PaymentCallbackConsumer {
 
     private final SubscriptionService subscriptionService;
 
+    /**
+     * Consumer responsável por receber as respostas do gateway de pagamentos.
+     */
     @RabbitListener(queues = RabbitMQConfig.QUEUE_PAYMENT_GATEWAY_RESPONSE)
     public void receivePaymentResponse(PaymentGatewayResponse event) {
-        log.info("Payment response received via RabbitMQ for transaction: {}", event.getTransactionId());
+        log.info("Resposta do gateway de pagamentos recebida via RabbitMQ para a transação: {}",
+                event.getTransactionId());
         try {
             subscriptionService.processPaymentCallback(event);
         } catch (UnavailableGatewayException e) {
             log.warn(
-                    "Gateway unavailable during payment callback processing for transaction {}. Message will be retried.",
+                    "Gateway indisponível durante o processamento de callback de pagamento para a transação {}. A mensagem será reenviada.",
                     event.getTransactionId());
             throw e; // Spring AMQP retry mechanism will handle this
         }

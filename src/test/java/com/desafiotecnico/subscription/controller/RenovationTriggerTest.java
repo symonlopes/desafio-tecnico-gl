@@ -1,7 +1,7 @@
 package com.desafiotecnico.subscription.controller;
 
 import com.desafiotecnico.subscription.domain.Plan;
-import com.desafiotecnico.subscription.domain.RenewalStatus;
+import com.desafiotecnico.subscription.domain.TransactionStatus;
 import com.desafiotecnico.subscription.domain.Subscription;
 import com.desafiotecnico.subscription.dto.request.SubscriptionRenewalTrigger;
 import com.desafiotecnico.subscription.producers.SubscriptionRenewalProducer;
@@ -83,7 +83,7 @@ public class RenovationTriggerTest {
                                 .findFirst()
                                 .orElseThrow();
 
-                assertEquals(RenewalStatus.NEW.getName(), transaction.getStatus());
+                assertEquals(TransactionStatus.NEW.name(), transaction.getStatus());
                 assertEquals(1990, transaction.getPriceInCents());
 
                 verify(renovationProducer, timeout(1000).atLeastOnce())
