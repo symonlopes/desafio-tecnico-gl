@@ -51,6 +51,7 @@ public class SubscriptionService {
                 .userId(request.getUserId())
                 .status(SubscriptionStatus.ATIVA)
                 .plan(request.getPlan())
+                .autoRenew(true)
                 .priceInCents(planEnum.getPriceInCents())
                 .startDate(LocalDate.now())
                 .expirationDate(LocalDate.now().plusMonths(1))

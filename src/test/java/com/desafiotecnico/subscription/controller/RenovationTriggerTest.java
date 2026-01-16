@@ -3,7 +3,7 @@ package com.desafiotecnico.subscription.controller;
 import com.desafiotecnico.subscription.domain.Plan;
 import com.desafiotecnico.subscription.domain.PaymentTransactionStatus;
 import com.desafiotecnico.subscription.domain.Subscription;
-import com.desafiotecnico.subscription.dto.request.SubscriptionRenewalTrigger;
+import com.desafiotecnico.subscription.dto.request.PaymentTransactionCreationRequest;
 import com.desafiotecnico.subscription.producers.SubscriptionRenewalProducer;
 import com.desafiotecnico.subscription.repository.SubscriptionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -65,8 +65,7 @@ public class RenovationTriggerTest {
 
                 subscriptionRepository.save(sub);
 
-                var request = com.desafiotecnico.subscription.dto.request.SubscriptionRenewalTrigger.builder()
-                                .maxSubscriptions(10)
+                var request = com.desafiotecnico.subscription.dto.request.PaymentTransactionCreationRequest.builder()
                                 .dateToProcess(LocalDate.now().plusDays(2))
                                 .build();
 

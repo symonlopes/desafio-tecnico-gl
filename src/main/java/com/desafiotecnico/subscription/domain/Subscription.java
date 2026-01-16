@@ -25,6 +25,10 @@ public class Subscription {
 
     private String plan;
 
+    @Column(name = "auto_renew", nullable = false)
+    @Builder.Default
+    private Boolean autoRenew = true;
+
     @Column(name = "price_in_cents")
     private Integer priceInCents;
 

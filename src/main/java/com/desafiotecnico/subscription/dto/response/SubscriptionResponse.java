@@ -33,11 +33,15 @@ public class SubscriptionResponse {
     @JsonProperty("statusRenovacao")
     private String renovationStatus;
 
+    @JsonProperty("autoRenew")
+    private Boolean autoRenew;
+
     public static SubscriptionResponse fromInternal(Subscription subscription) {
         return SubscriptionResponse.builder()
                 .id(subscription.getId())
                 .userId(subscription.getUserId())
                 .plan(subscription.getPlan())
+                .autoRenew(subscription.getAutoRenew())
                 .priceInCents(subscription.getPriceInCents())
                 .startDate(subscription.getStartDate())
                 .expirationDate(subscription.getExpirationDate())

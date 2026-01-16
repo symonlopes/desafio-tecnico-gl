@@ -1,7 +1,6 @@
 package com.desafiotecnico.subscription.controller;
 
-import com.desafiotecnico.subscription.dto.request.SubscriptionRenewalTrigger;
-
+import com.desafiotecnico.subscription.dto.request.PaymentTransactionEnqueuRequest;
 import com.desafiotecnico.subscription.service.TriggersService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,9 +17,16 @@ public class TriggersController {
 
     private final TriggersService triggersService;
 
-    @PostMapping("/renewal")
-    public ResponseEntity<Void> triggerRenovation(@RequestBody @Valid SubscriptionRenewalTrigger request) {
-        triggersService.triggerRenovation(request.getMaxSubscriptions(), request.getDateToProcess());
+    @PostMapping("/generate-payment-transactions")
+    public ResponseEntity<Void> generatePaymentTransactions() {
+        triggersService.generatePaymentTransactions();
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/enqueue-payment-transactions")
+    public ResponseEntity<Void> enqueuePaymentTransactions(
+            @RequestBody @Valid PaymentTransactionEnqueuRequest request) {
+        triggersService.enqueuePaymentTransactions(request.getLimit());
         return ResponseEntity.ok().build();
     }
 }
