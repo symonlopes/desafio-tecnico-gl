@@ -1,12 +1,12 @@
 package com.desafiotecnico.subscription.producers;
 
 import com.desafiotecnico.subscription.dto.event.SubscriptionCancelEvent;
-import com.desafiotecnico.subscription.dto.event.SubscriptionRenewalStartEvent;
+import com.desafiotecnico.subscription.dto.event.PaymentTransactionEvent;
 
 public interface SubscriptionRenewalProducer {
-    void sendRenewalStart(SubscriptionRenewalStartEvent event);
+    void sendRenewalStart(PaymentTransactionEvent event);
 
-    void sendRenewalStart(SubscriptionRenewalStartEvent event, long delayMs);
+    void sendRenewalStart(PaymentTransactionEvent event, long delayMs);
 
     void sendCancelSubscription(SubscriptionCancelEvent event);
 

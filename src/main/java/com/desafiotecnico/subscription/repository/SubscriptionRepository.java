@@ -24,7 +24,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     @Query(value = "SELECT s.* FROM subscriptions s " +
             "WHERE s.expiration_date = :date " +
             "AND s.status = 'ATIVA' " +
-            "AND NOT EXISTS (SELECT 1 FROM renewal_transactions rt WHERE rt.subscription_id = s.id AND rt.data_finalizacao IS NULL)", nativeQuery = true)
+            "AND NOT EXISTS (SELECT 1 FROM payment_transactions rt WHERE rt.subscription_id = s.id AND rt.data_finalizacao IS NULL)", nativeQuery = true)
     List<Subscription> findSubscriptionToProccessPayment(@Param("date") LocalDate date, Pageable pageable);
 
 }

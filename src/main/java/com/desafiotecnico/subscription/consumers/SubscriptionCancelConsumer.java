@@ -22,7 +22,7 @@ public class SubscriptionCancelConsumer {
                 event.getSubscriptionId(),
                 event.getReason());
 
-        subscriptionService.cancelSubscription(event.getSubscriptionId());
+        subscriptionService.cancelSubscription(event.getSubscriptionId(), event.getReason());
 
     }
 }

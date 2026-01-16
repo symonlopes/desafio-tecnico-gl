@@ -88,6 +88,6 @@ public class RenovationTriggerTest {
 
                 verify(renovationProducer, timeout(1000).atLeastOnce())
                                 .sendRenewalStart(Mockito
-                                                .any(com.desafiotecnico.subscription.dto.event.SubscriptionRenewalStartEvent.class));
+                                                .any(com.desafiotecnico.subscription.dto.event.PaymentTransactionEvent.class));
         }
 }

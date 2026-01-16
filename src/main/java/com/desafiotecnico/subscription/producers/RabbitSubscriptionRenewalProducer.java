@@ -3,7 +3,7 @@ package com.desafiotecnico.subscription.producers;
 import com.desafiotecnico.subscription.config.RabbitMQConfig;
 import com.desafiotecnico.subscription.dto.event.PaymentGatewayResponse;
 import com.desafiotecnico.subscription.dto.event.SubscriptionCancelEvent;
-import com.desafiotecnico.subscription.dto.event.SubscriptionRenewalStartEvent;
+import com.desafiotecnico.subscription.dto.event.PaymentTransactionEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -17,14 +17,14 @@ public class RabbitSubscriptionRenewalProducer implements SubscriptionRenewalPro
     private final RabbitTemplate rabbitTemplate;
 
     @Override
-    public void sendRenewalStart(SubscriptionRenewalStartEvent event) {
+    public void sendRenewalStart(PaymentTransactionEvent event) {
         log.info("Sending renewal start message for subscription {} via RabbitMQ", event.getSubscriptionId());
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_SUBSCRIPTION,
                 RabbitMQConfig.QUEUE_SUBSCRIPTION_RENEWAL_START, event);
     }
 
     @Override
-    public void sendRenewalStart(SubscriptionRenewalStartEvent event, long delayMs) {
+    public void sendRenewalStart(PaymentTransactionEvent event, long delayMs) {
         log.info("Sending renewal start message for subscription {} via RabbitMQ with delay {}ms",
                 event.getSubscriptionId(), delayMs);
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_SUBSCRIPTION,

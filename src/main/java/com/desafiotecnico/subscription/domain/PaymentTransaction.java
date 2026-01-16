@@ -10,12 +10,12 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "renewal_transactions")
+@Table(name = "payment_transactions")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RenewalTransaction {
+public class PaymentTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -30,8 +30,6 @@ public class RenewalTransaction {
     private LocalDateTime dataInicio;
 
     private LocalDateTime dataFinalizacao;
-
-    private Integer paymentErrorCount;
 
     @Column(name = "price_in_cents")
     private Integer priceInCents;

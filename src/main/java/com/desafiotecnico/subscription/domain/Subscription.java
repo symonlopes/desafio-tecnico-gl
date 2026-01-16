@@ -31,6 +31,7 @@ public class Subscription {
     private LocalDate startDate;
     private LocalDate expirationDate;
     private LocalDate lastRenewalDate;
+    private String cancelReason;
 
     @Enumerated(EnumType.STRING)
     private SubscriptionStatus status;

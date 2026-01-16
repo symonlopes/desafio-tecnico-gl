@@ -11,8 +11,12 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SubscriptionRenewalStartEvent {
+public class PaymentTransactionEvent {
     private UUID subscriptionId;
     private UUID transactionId;
     private Integer priceInCents;
+
+    @Builder.Default
+    private int rejectedPaymentCount = 0;
+
 }

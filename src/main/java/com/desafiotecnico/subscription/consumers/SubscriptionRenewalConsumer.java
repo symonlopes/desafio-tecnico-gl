@@ -1,8 +1,8 @@
 package com.desafiotecnico.subscription.consumers;
 
 import com.desafiotecnico.subscription.config.RabbitMQConfig;
-import com.desafiotecnico.subscription.dto.event.SubscriptionRenewalStartEvent;
-import com.desafiotecnico.subscription.service.SubscriptionService;
+import com.desafiotecnico.subscription.dto.event.PaymentTransactionEvent;
+import com.desafiotecnico.subscription.service.PaymentTransactionService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,11 +15,11 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class SubscriptionRenewalConsumer {
 
-    private final SubscriptionService subscriptionService;
+    private final PaymentTransactionService paymentTransactionService;
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE_SUBSCRIPTION_RENEWAL_START, concurrency = "100")
-    public void consumeRenovationStart(SubscriptionRenewalStartEvent event) {
+    public void consumePaymentTransactionStartationStart(PaymentTransactionEvent event) {
         log.info("Mensagem de QUEUE_SUBSCRIPTION_RENEWAL_START recebida via RabbitMQ: {}", event);
-        subscriptionService.startPaymentTransaction(event);
+        paymentTransactionService.startPaymentTransaction(event);
     }
 }

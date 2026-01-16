@@ -14,12 +14,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 @RabbitListener(queues = RabbitMQConfig.QUEUE_PAYMENT_TRANSACTION_CANCEL)
-public class SubscriptionRenewalTransactionCancelConsumer {
+public class PaymentTransactionCancelConsumer {
 
     private final PaymentTransactionService paymentTransactionService;
 
     @RabbitHandler
-    public void consumeRenewalStartDlq(com.desafiotecnico.subscription.dto.event.SubscriptionRenewalStartEvent event) {
+    public void consumeRenewalStartDlq(com.desafiotecnico.subscription.dto.event.PaymentTransactionEvent event) {
         log.warn(
                 "Mensagem de renovação recebida na DLQ (Esgotamento de tentativas): TransactionId={}, SubscriptionId={}",
                 event.getTransactionId(),
