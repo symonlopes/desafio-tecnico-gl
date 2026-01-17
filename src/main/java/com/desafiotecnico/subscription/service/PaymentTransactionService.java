@@ -106,8 +106,6 @@ public class PaymentTransactionService {
 
         } catch (HttpClientErrorException e) {
             log.warn("Pagamento RECUSADO pelo gateway (4xx). {}", e.getMessage());
-
-            // 4. Tratamento de Erro de Cliente (Lógica de Retry ou Falha Final)
             handleClientError(event, e.getMessage());
 
         } catch (HttpServerErrorException | ResourceAccessException e) {

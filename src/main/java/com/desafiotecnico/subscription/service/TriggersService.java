@@ -53,9 +53,7 @@ public class TriggersService {
         public void enqueuePaymentTransactionsV2(int limit, LocalDate dateToProcess) {
 
                 log.info("Disparando enfileiramento de transações de pagamento abertas, limite: {}", limit);
-
                 var openPaymentTransactions = paymentTransactionRepository.findAndMarkBatchAsProcessing(limit);
-
                 log.info("{} transações em aberto serão enviadas para fila.", openPaymentTransactions.size());
 
                 openPaymentTransactions.parallelStream().forEach(pt -> {

@@ -32,7 +32,7 @@ public class TriggersController {
     @PostMapping("/enqueue-payment-transactions")
     public ResponseEntity<Void> enqueuePaymentTransactions(
             @RequestBody @Valid PaymentTransactionEnqueuRequest request) {
-        triggersService.enqueuePaymentTransactions(request.getLimit(), request.getDateToProcess());
+        triggersService.enqueuePaymentTransactionsV2(request.getLimit(), request.getDateToProcess());
         return ResponseEntity.ok().build();
     }
 }
