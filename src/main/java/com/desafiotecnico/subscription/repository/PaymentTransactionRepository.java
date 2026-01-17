@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -46,10 +47,28 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
 
     @Query(value = """
             SELECT pt.* FROM payment_transactions pt
-            WHERE pt.data_inicio >= CURRENT_DATE 
+            WHERE pt.data_inicio >= CURRENT_DATE
               AND pt.data_inicio < CURRENT_DATE + 1
               AND pt.status = 'CREATED'
               AND pt.data_finalizacao IS NULL;
                 """, nativeQuery = true)
     List<PaymentTransaction> findOpenPaymentTransactions(Pageable pageable);
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+                UPDATE payment_transactions
+                SET status = 'PROCESSING'
+                WHERE id IN (
+                    SELECT id
+                    FROM payment_transactions
+                    WHERE status = 'CREATED'
+                    AND data_inicio <= CURRENT_DATE
+                    ORDER BY data_inicio ASC
+                    LIMIT :limit
+                    FOR UPDATE SKIP LOCKED
+                )
+                RETURNING *;
+            """, nativeQuery = true)
+    List<PaymentTransaction> findAndMarkBatchAsProcessing(@Param("limit") int limit);
+
 }

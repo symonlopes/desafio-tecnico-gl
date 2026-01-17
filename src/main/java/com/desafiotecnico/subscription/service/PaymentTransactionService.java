@@ -9,6 +9,8 @@ import com.desafiotecnico.subscription.dto.gateway.PaymentGatewayResponse;
 
 import com.desafiotecnico.subscription.repository.PaymentTransactionRepository;
 
+import jakarta.persistence.EntityNotFoundException;
+
 import com.desafiotecnico.subscription.config.RabbitMQConfig;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
@@ -60,33 +62,34 @@ public class PaymentTransactionService {
         log.info("Transação {} cancelada com sucesso", transactionId);
     }
 
-    protected Optional<PaymentTransaction> isValidForProcessing(PaymentTransactionEvent event) {
-        var transactionOpt = paymentTransactionRepository.findById(event.getTransactionId());
+    // protected Optional<PaymentTransaction>
+    // isValidForProcessing(PaymentTransactionEvent event) {
+    // var transactionOpt =
+    // paymentTransactionRepository.findById(event.getTransactionId());
 
-        if (transactionOpt.isEmpty()) {
-            log.warn("Transação {} não encontrada no banco. Descartando mensagem.", event.getTransactionId());
-            return Optional.empty();
-        }
+    // if (transactionOpt.isEmpty()) {
+    // log.warn("Transação {} não encontrada no banco. Descartando mensagem.",
+    // event.getTransactionId());
+    // return Optional.empty();
+    // }
 
-        var transaction = transactionOpt.get();
+    // var transaction = transactionOpt.get();
 
-        return Optional.of(transaction);
-    }
+    // return Optional.of(transaction);
+    // }
 
     public void startPaymentTransaction(PaymentTransactionEvent event) {
 
         log.info("Processando renovação. Subscription: {}, Transaction: {}",
                 event.getSubscriptionId(), event.getTransactionId());
 
-        var transactionOpt = isValidForProcessing(event);
+        var transactionOpt = paymentTransactionRepository.findById(event.getTransactionId());
 
         if (transactionOpt.isEmpty()) {
             return;
         }
 
         try {
-
-            updateStatus(transactionOpt.get(), PaymentTransactionStatus.PROCESSING);
 
             // Aqui teríamos outras informações como produto, cpf, etc.
             var gatewayRequest = PaymentGatewayRequest.builder()

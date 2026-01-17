@@ -22,6 +22,7 @@ public class TriggersService {
         private final PaymentTransactionRepository paymentTransactionRepository;
 
         @Transactional
+        @Deprecated
         public void generatePaymentTransactions(LocalDate dateToProcess) {
                 log.info("Gerando transações de pagamento para hoje.");
                 int subscriptionsCount = paymentTransactionRepository.generatePaymentTransactions();
@@ -34,6 +35,26 @@ public class TriggersService {
 
                 var openPaymentTransactions = paymentTransactionRepository.findOpenPaymentTransactions(
                                 PageRequest.of(0, limit));
+
+                log.info("{} transações em aberto serão enviadas para fila.", openPaymentTransactions.size());
+
+                openPaymentTransactions.parallelStream().forEach(pt -> {
+                        subscriptionRenewalProducer.sendRenewalStart(
+                                        PaymentTransactionEvent.builder()
+                                                        .subscriptionId(pt.getSubscription().getId())
+                                                        .transactionId(pt.getId())
+                                                        .priceInCents(pt.getPriceInCents())
+                                                        .build());
+                });
+
+        }
+
+        @Transactional
+        public void enqueuePaymentTransactionsV2(int limit, LocalDate dateToProcess) {
+
+                log.info("Disparando enfileiramento de transações de pagamento abertas, limite: {}", limit);
+
+                var openPaymentTransactions = paymentTransactionRepository.findAndMarkBatchAsProcessing(limit);
 
                 log.info("{} transações em aberto serão enviadas para fila.", openPaymentTransactions.size());
 
