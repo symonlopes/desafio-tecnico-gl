@@ -17,14 +17,8 @@ public class SubscriptionRenewalConsumer {
 
     private final PaymentTransactionService paymentTransactionService;
 
-    /*
-     * O parâmetro concurrency deve ser ajustado de acordo com o rate limit do
-     * gateway de pagamento e instâncias desse código em execução.
-     * 
-     */
-    @RabbitListener(queues = RabbitMQConfig.QUEUE_SUBSCRIPTION_RENEWAL_START, concurrency = "100")
+    @RabbitListener(queues = RabbitMQConfig.QUEUE_SUBSCRIPTION_RENEWAL_START, concurrency = "${subscription.renewal.consumer.concurrency}")
     public void consumePaymentTransactionStartationStart(PaymentTransactionEvent event) {
-        log.info("Mensagem de QUEUE_SUBSCRIPTION_RENEWAL_START recebida via RabbitMQ: {}", event);
         paymentTransactionService.startPaymentTransaction(event);
     }
 }

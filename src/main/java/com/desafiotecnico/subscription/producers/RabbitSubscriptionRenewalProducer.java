@@ -6,6 +6,7 @@ import com.desafiotecnico.subscription.dto.event.SubscriptionCancelEvent;
 import com.desafiotecnico.subscription.dto.event.PaymentTransactionEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
@@ -54,4 +55,5 @@ public class RabbitSubscriptionRenewalProducer implements SubscriptionRenewalPro
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_SUBSCRIPTION,
                 RabbitMQConfig.QUEUE_PAYMENT_TRANSACTION_CANCEL, event);
     }
+
 }

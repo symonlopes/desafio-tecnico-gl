@@ -9,8 +9,6 @@ import com.desafiotecnico.subscription.dto.gateway.PaymentGatewayResponse;
 
 import com.desafiotecnico.subscription.repository.PaymentTransactionRepository;
 
-import jakarta.persistence.EntityNotFoundException;
-
 import com.desafiotecnico.subscription.config.RabbitMQConfig;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
@@ -19,8 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -29,6 +25,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -47,9 +44,9 @@ public class PaymentTransactionService {
     @Value("${declined.payment.retry.interval.in.seconds}")
     private Integer declinedPaymentRetryIntervalInSeconds;
 
-    // Usado pelo PaymentTransactionCancelConsumer
     @Transactional
     public void cancelTransaction(UUID transactionId, String reason, PaymentTransactionStatus status) {
+        // Chamado pelo PaymentTransactionCancelConsumer
         log.info("Cancelando transação {} com motivo: {}", transactionId, reason);
 
         PaymentTransaction transaction = paymentTransactionRepository.findById(transactionId)
@@ -63,29 +60,33 @@ public class PaymentTransactionService {
         log.info("Transação {} cancelada com sucesso", transactionId);
     }
 
-    @Transactional
-    // @Retryable(retryFor = EntityNotFoundException.class, maxAttempts = 3, backoff
-    // = @Backoff(delay = 200, multiplier = 2))
+    protected Optional<PaymentTransaction> isValidForProcessing(PaymentTransactionEvent event) {
+        var transactionOpt = paymentTransactionRepository.findById(event.getTransactionId());
+
+        if (transactionOpt.isEmpty()) {
+            log.warn("Transação {} não encontrada no banco. Descartando mensagem.", event.getTransactionId());
+            return Optional.empty();
+        }
+
+        var transaction = transactionOpt.get();
+
+        return Optional.of(transaction);
+    }
+
     public void startPaymentTransaction(PaymentTransactionEvent event) {
 
         log.info("Processando renovação. Subscription: {}, Transaction: {}",
                 event.getSubscriptionId(), event.getTransactionId());
 
-        var transaction = paymentTransactionRepository.findById(event.getTransactionId());
+        var transactionOpt = isValidForProcessing(event);
 
-        if (transaction.isEmpty()) {
-            log.warn("Transação {} não encontrada no banco.", event.getTransactionId());
-            throw new EntityNotFoundException("Transação " + event.getTransactionId() + " não encontrada no banco.");
-        }
-
-        if (isFinalStatus(transaction.get().getStatus())) {
-            log.warn("Transação {} já processada com status {}. Ignorando.", transaction.get().getId(),
-                    transaction.get().getStatus());
+        if (transactionOpt.isEmpty()) {
             return;
         }
 
         try {
-            updateStatus(transaction.get(), PaymentTransactionStatus.PROCESSING);
+
+            updateStatus(transactionOpt.get(), PaymentTransactionStatus.PROCESSING);
 
             // Aqui teríamos outras informações como produto, cpf, etc.
             var gatewayRequest = PaymentGatewayRequest.builder()
@@ -97,41 +98,53 @@ public class PaymentTransactionService {
                     PaymentGatewayResponse.class);
 
             if (response != null && response.getCustomId() != null) {
-                updateStatus(transaction.get(), PaymentTransactionStatus.APPROVED);
-                // Atualizar a assinatura:
-                subscriptionService.renewSubscription(event.getSubscriptionId());
+                handleSuccess(transactionOpt.get(), event.getSubscriptionId());
             }
 
         } catch (HttpClientErrorException e) {
-            log.warn("Pagamento RECUSADO pelo gateway (4xx).", e.getMessage());
+            log.warn("Pagamento RECUSADO pelo gateway (4xx). {}", e.getMessage());
 
-            if (event.getRejectedPaymentCount() < 3) {
-                log.info("Tentando novamente... tentativa {}/3", event.getRejectedPaymentCount() + 1);
-                updateStatus(transaction.get(), PaymentTransactionStatus.PENDING_RETRY);
-                event.setRejectedPaymentCount(event.getRejectedPaymentCount() + 1);
-                reenqueWithDelay(event, declinedPaymentRetryIntervalInSeconds);
-            } else {
-                log.error("Tentativas esgotadas de pagamento esgotadas para transação {}.", event.getTransactionId());
-
-                // Publica evento de cancelamento da assinatura
-                SubscriptionCancelEvent cancelEvent = SubscriptionCancelEvent.builder()
-                        .subscriptionId(event.getSubscriptionId())
-                        .reason("Pagamento recusado após máximo de tentativas: " + e.getMessage())
-                        .build();
-
-                rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_SUBSCRIPTION,
-                        RabbitMQConfig.QUEUE_SUBSCRIPTION_CANCEL, cancelEvent);
-
-                updateStatus(transaction.get(), PaymentTransactionStatus.DECLINED, e.getMessage());
-            }
+            // 4. Tratamento de Erro de Cliente (Lógica de Retry ou Falha Final)
+            handleClientError(event, e.getMessage());
 
         } catch (HttpServerErrorException | ResourceAccessException e) {
             log.warn("Gateway instável. Marcando para Retry.", e);
             reenqueWithDelay(event, 10);
         } catch (Exception e) {
             log.error("Erro fatal/interno no processamento.", e);
-            updateStatus(transaction.get(), PaymentTransactionStatus.ABORTED);
+            updateStatus(transactionOpt.get(), PaymentTransactionStatus.ABORTED);
             throw new AmqpRejectAndDontRequeueException("Erro desconhecido: " + e.getMessage(), e);
+        }
+    }
+
+    @Transactional
+    protected void handleSuccess(PaymentTransaction transaction, UUID subscriptionId) {
+        updateStatus(transaction, PaymentTransactionStatus.APPROVED);
+        subscriptionService.renewSubscription(subscriptionId);
+        log.info("Transação {} aprovada e assinatura renovada.", transaction.getId());
+    }
+
+    @Transactional
+    protected void handleClientError(PaymentTransactionEvent event, String errorMessage) {
+        var transaction = paymentTransactionRepository.findById(event.getTransactionId())
+                .orElseThrow();
+
+        if (event.getRejectedPaymentCount() < 3) {
+            // log.warn("Tentando novamente... tentativa {}/3",
+            // event.getRejectedPaymentCount() + 1);
+            updateStatus(transaction, PaymentTransactionStatus.PENDING_RETRY);
+            event.setRejectedPaymentCount(event.getRejectedPaymentCount() + 1);
+            reenqueWithDelay(event, declinedPaymentRetryIntervalInSeconds);
+        } else {
+            log.warn("Tentativas esgotadas para transação {}.", event.getTransactionId());
+            updateStatus(transaction, PaymentTransactionStatus.DECLINED, errorMessage);
+            SubscriptionCancelEvent cancelEvent = SubscriptionCancelEvent.builder()
+                    .subscriptionId(event.getSubscriptionId())
+                    .reason("Pagamento recusado após máximo de tentativas: " + errorMessage)
+                    .build();
+
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_SUBSCRIPTION,
+                    RabbitMQConfig.QUEUE_SUBSCRIPTION_CANCEL, cancelEvent);
         }
     }
 
@@ -150,7 +163,8 @@ public class PaymentTransactionService {
                 || PaymentTransactionStatus.ABORTED.name().equals(status);
     }
 
-    private void updateStatus(PaymentTransaction transaction, PaymentTransactionStatus processing) {
+    @Transactional
+    protected void updateStatus(PaymentTransaction transaction, PaymentTransactionStatus processing) {
         transaction.setStatus(processing.name());
         if (isFinalStatus(transaction.getStatus())) {
             transaction.setDataFinalizacao(LocalDateTime.now());

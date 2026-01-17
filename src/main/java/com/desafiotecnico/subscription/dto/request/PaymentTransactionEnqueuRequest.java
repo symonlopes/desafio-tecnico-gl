@@ -18,4 +18,7 @@ public class PaymentTransactionEnqueuRequest {
     @Max(value = 500000, message = "Amount must be at most 50000")
     @Builder.Default
     private int limit = 1000;
+
+    @Builder.Default
+    private LocalDate dateToProcess = LocalDate.now();
 }

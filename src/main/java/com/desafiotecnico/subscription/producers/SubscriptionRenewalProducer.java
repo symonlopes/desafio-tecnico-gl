@@ -1,6 +1,11 @@
 package com.desafiotecnico.subscription.producers;
 
 import com.desafiotecnico.subscription.dto.event.SubscriptionCancelEvent;
+import com.desafiotecnico.subscription.dto.event.PaymentGatewayResponse;
+import com.desafiotecnico.subscription.dto.event.TransactionCancelEvent;
+
+import java.util.List;
+
 import com.desafiotecnico.subscription.dto.event.PaymentTransactionEvent;
 
 public interface SubscriptionRenewalProducer {
@@ -10,7 +15,8 @@ public interface SubscriptionRenewalProducer {
 
     void sendCancelSubscription(SubscriptionCancelEvent event);
 
-    void sendPaymentResponse(com.desafiotecnico.subscription.dto.event.PaymentGatewayResponse event);
+    void sendPaymentResponse(PaymentGatewayResponse event);
 
-    void sendCancelTransaction(com.desafiotecnico.subscription.dto.event.TransactionCancelEvent event);
+    void sendCancelTransaction(TransactionCancelEvent event);
+
 }

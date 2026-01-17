@@ -3,11 +3,10 @@ package com.desafiotecnico.subscription.controller;
 import com.desafiotecnico.subscription.domain.Plan;
 import com.desafiotecnico.subscription.domain.PaymentTransactionStatus;
 import com.desafiotecnico.subscription.domain.Subscription;
-import com.desafiotecnico.subscription.dto.request.PaymentTransactionCreationRequest;
 import com.desafiotecnico.subscription.producers.SubscriptionRenewalProducer;
 import com.desafiotecnico.subscription.repository.SubscriptionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.datafaker.Faker;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +25,6 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -48,8 +45,6 @@ public class RenovationTriggerTest {
 
         @MockitoBean
         private SubscriptionRenewalProducer renovationProducer;
-
-        private final Faker faker = new Faker();
 
         @Test
         void triggerRenovation_UpdatesStatusAndSendsMessage() throws Exception {
